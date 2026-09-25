@@ -72,7 +72,7 @@ function Workspace() {
               : section === "Budget"
                 ? "Budget"
                 : section === "Places"
-                  ? "Itinerary"
+                  ? "Map"
                   : "Overview"
           }
         />

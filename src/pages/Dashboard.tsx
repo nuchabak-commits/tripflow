@@ -22,7 +22,8 @@ import {
   coverStyle,
   dateNumber,
 } from "../lib/trips";
-import { KEY, LEGACY } from "../lib/storage";
+import { KEY, LEGACY, PREVIOUS } from "../lib/storage";
+import { located } from "../lib/geo";
 export default function Dashboard({
   trips,
   setTrips,
@@ -75,7 +76,7 @@ export default function Dashboard({
             placeholder="Search trips and places…"
           />
         </div>
-        <span className="version">v0.3</span>
+        <span className="version">v0.4</span>
         <div className="avatar" aria-label="Local workspace">
           TF
         </div>
@@ -301,7 +302,10 @@ function Summary({
   function download(raw = false) {
     try {
       const data = raw
-        ? (localStorage.getItem(KEY) ?? localStorage.getItem(LEGACY) ?? "[]")
+        ? (localStorage.getItem(KEY) ??
+          localStorage.getItem(PREVIOUS) ??
+          localStorage.getItem(LEGACY) ??
+          "[]")
         : JSON.stringify(trips, null, 2);
       const url = URL.createObjectURL(
         new Blob([data], { type: "application/json" }),
@@ -321,8 +325,8 @@ function Summary({
         <span className="eyebrow">YOUR WORKSPACE</span>
         <h1>Settings</h1>
         <p>
-          TripFlow v0.3 · Data stays in this browser. Use the same address and
-          port to retain access to v0.2 data.
+          TripFlow v0.4 · Data stays in this browser. Use the same address and
+          port to retain access to v0.3 and v0.2 data.
         </p>
         <div className="settings-actions">
           <button className="primary" onClick={() => download()}>
@@ -333,25 +337,26 @@ function Summary({
           </button>
         </div>
         <p>
-          v0.2 data is copied to v0.3 on first launch. Its original key and
-          migration backup remain untouched. JSON restore is planned for a later
-          version.
+          v0.3 (or v0.2) data is copied to v0.4 on first launch. The original
+          keys and migration backup remain untouched. Map tiles and place search
+          load from OpenStreetMap only while the Map or a location picker is
+          open. JSON restore is planned for a later version.
         </p>
         <button
           className="danger"
           onClick={async () => {
             if (
               await confirm(
-                "Delete all v0.3 trips?",
-                "This empties your v0.3 workspace. Export a backup first. Your v0.2 data is retained.",
+                "Delete all v0.4 trips?",
+                "This empties your v0.4 workspace. Export a backup first. Your v0.3 and v0.2 data is retained.",
               )
             ) {
               reset();
-              notify("v0.3 workspace cleared");
+              notify("v0.4 workspace cleared");
             }
           }}
         >
-          Delete all v0.3 trips
+          Delete all v0.4 trips
         </button>
       </section>
     );
@@ -384,7 +389,7 @@ function Summary({
                   : section === "Packing List"
                     ? `${t.packing.filter((x) => x.packed).length}/${t.packing.length} packed`
                     : section === "Places"
-                      ? `${t.stops.length} activities`
+                      ? `${t.stops.length} activities · ${t.stops.filter(located).length} pinned on the map`
                       : `${dateLabel(t.startDate)} – ${dateLabel(t.endDate)} · ${status(t)}`}
               </small>
             </span>

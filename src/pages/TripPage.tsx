@@ -18,6 +18,7 @@ import {
   ArrowDown,
   CalendarDays,
   FileText,
+  Map as MapIcon,
 } from "lucide-react";
 import {
   DndContext,
@@ -45,7 +46,13 @@ import {
   money,
   coverStyle,
   status,
+  kindNames,
 } from "../lib/trips";
+import TripMap from "../components/TripMap";
+import TripMapView, { mapData } from "../components/TripMapView";
+import type { MapFilter } from "../components/TripMapView";
+import LocationField from "../components/LocationField";
+import { formatCoordinates, located, parseCoordinates } from "../lib/geo";
 const icons = {
   flight: Plane,
   hotel: Hotel,
@@ -53,13 +60,7 @@ const icons = {
   photo: Camera,
   food: Utensils,
 };
-const names = {
-  flight: "Flight",
-  hotel: "Hotel",
-  place: "Place",
-  photo: "Photo spot",
-  food: "Food & drink",
-};
+const names = kindNames;
 function SortableStop({
   s,
   onDelete,
@@ -102,7 +103,14 @@ function SortableStop({
         <span className="stop-kind">{names[s.kind]}</span>
         <b>{s.title}</b>
         <p>{s.note}</p>
-        <small>{s.duration}</small>
+        <small>
+          {s.duration}
+          {located(s) && (
+            <span className="pinned">
+              <MapPin size={11} /> Pinned
+            </span>
+          )}
+        </small>
       </div>
       <div className="stop-actions">
         <button
@@ -160,6 +168,7 @@ export default function TripPage({
 }) {
   const [tab, setTab] = useState(initialTab);
   const [day, setDay] = useState(1);
+  const [mapFilter, setMapFilter] = useState<MapFilter>("all");
   const [editingTrip, setEditingTrip] = useState(false);
   const [stopEdit, setStopEdit] = useState<Stop | null | undefined>();
   const { confirm } = useFeedback();
@@ -171,7 +180,8 @@ export default function TripPage({
   );
   const days = dayCount(trip);
   const stops = trip.stops.filter((s) => s.day === day);
-  const tabs = ["Overview", "Itinerary", "Budget", "Packing", "Notes"];
+  const tabs = ["Overview", "Itinerary", "Map", "Budget", "Packing", "Notes"];
+  const dayMap = mapData(trip, [day]);
   const setStops = (next: Stop[]) =>
     update({
       ...trip,
@@ -306,21 +316,51 @@ export default function TripPage({
           <aside className="map-card">
             <span className="eyebrow">THE DAY AT A GLANCE</span>
             <h3>{day === 0 ? "Activities to schedule" : "Your daily route"}</h3>
+            {dayMap.points.length > 0 && (
+              <TripMap
+                className="compact"
+                label={`Map preview for ${day === 0 ? "unscheduled activities" : "day " + day}`}
+                points={dayMap.points}
+                routes={dayMap.routes}
+                fitKey={`${day}:${dayMap.points.length}`}
+              />
+            )}
             {stops.map((s, i) => (
               <div className="place-row" key={s.id}>
                 <span>{i + 1}</span>
-                <b>{s.title}</b>
+                <b>
+                  {s.title}
+                  {!located(s) && (
+                    <small className="no-pin"> · no location</small>
+                  )}
+                </b>
                 <time>{s.time}</time>
               </div>
             ))}
             <p className="muted">
               {stops.length
-                ? "Activity order only."
-                : "Add activities to see your day here."}{" "}
-              Interactive maps are planned for v0.4.
+                ? `${dayMap.points.length} of ${stops.length} activities pinned.`
+                : "Add activities to see your day here."}
             </p>
+            <button
+              className="secondary wide"
+              onClick={() => {
+                setMapFilter(day);
+                setTab("Map");
+              }}
+            >
+              <MapIcon size={15} /> Open full map
+            </button>
           </aside>
         </section>
+      )}
+      {tab === "Map" && (
+        <TripMapView
+          trip={trip}
+          filter={mapFilter}
+          setFilter={setMapFilter}
+          edit={(s) => setStopEdit(s)}
+        />
       )}
       {tab === "Budget" && (
         <Budget
@@ -333,6 +373,7 @@ export default function TripPage({
       {tab === "Notes" && <Notes trip={trip} update={update} />}{" "}
       {stopEdit !== undefined && (
         <StopForm
+          trip={trip}
           days={days}
           day={day}
           stop={stopEdit}
@@ -344,7 +385,7 @@ export default function TripPage({
                 ? trip.stops.map((x) => (x.id === s.id ? s : x))
                 : [...trip.stops, s],
             });
-            setDay(s.day);
+            if (tab === "Itinerary") setDay(s.day);
             setStopEdit(undefined);
           }}
         />
@@ -356,6 +397,9 @@ export default function TripPage({
           save={(t) => {
             update(t);
             setDay((d) => Math.min(d, dayCount(t)));
+            setMapFilter((f) =>
+              f === "all" || f <= dayCount(t) ? f : "all",
+            );
             setEditingTrip(false);
           }}
         />
@@ -466,12 +510,14 @@ function Overview({
   );
 }
 function StopForm({
+  trip,
   days,
   day,
   stop,
   close,
   save,
 }: {
+  trip: Trip;
   days: number;
   day: number;
   stop: Stop | null;
@@ -490,13 +536,33 @@ function StopForm({
     },
   );
   const [error, setError] = useState("");
+  const [coords, setCoords] = useState(
+    stop && located(stop) ? formatCoordinates(stop) : "",
+  );
+  const context = mapData(
+    trip,
+    Array.from({ length: days + 1 }, (_, i) => i),
+  ).points
+    .filter((p) => p.id !== f.id)
+    .map((p) => ({ ...p, label: "", muted: true }));
   return (
     <Modal title={stop ? "Edit activity" : "Add activity"} close={close}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
           if (!f.title.trim()) return setError("Enter an activity name.");
-          save({ ...f, title: f.title.trim(), note: f.note.trim() });
+          const point = parseCoordinates(coords);
+          if (coords.trim() && !point)
+            return setError(
+              "Enter coordinates as latitude, longitude (e.g. 30.6545, 104.0832) or paste a map link.",
+            );
+          const { lat: _lat, lng: _lng, ...rest } = f;
+          save({
+            ...rest,
+            ...(point ?? {}),
+            title: f.title.trim(),
+            note: f.note.trim(),
+          });
         }}
       >
         <h2>{stop ? "Edit" : "Add"} activity</h2>
@@ -567,6 +633,14 @@ function StopForm({
             placeholder="2h 30m"
           />
         </label>
+        <LocationField
+          text={coords}
+          setText={setCoords}
+          query={[f.title.trim(), trip.city, trip.country]
+            .filter(Boolean)
+            .join(", ")}
+          context={context}
+        />
         {error && (
           <p className="form-error" role="alert">
             {error}

@@ -7,6 +7,9 @@ export type Stop = {
   note: string;
   duration: string;
   kind: StopKind;
+  /** v0.4: optional WGS84 coordinates; both present or both absent. */
+  lat?: number;
+  lng?: number;
 };
 export type Expense = {
   id: string;

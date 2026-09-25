@@ -1,6 +1,8 @@
 import type { Trip } from "../types";
 import { validDate, dayCount } from "./trips";
-export const KEY = "tripflow-v03",
+import { validCoordinate } from "./geo";
+export const KEY = "tripflow-v04",
+  PREVIOUS = "tripflow-v03",
   LEGACY = "tripflow-v02";
 export function validateTrips(value: unknown): value is Trip[] {
   if (!Array.isArray(value)) return false;
@@ -39,7 +41,9 @@ export function validateTrips(value: unknown): value is Trip[] {
             text(s.title) &&
             text(s.note) &&
             text(s.duration) &&
-            ["flight", "hotel", "place", "photo", "food"].includes(s.kind),
+            ["flight", "hotel", "place", "photo", "food"].includes(s.kind) &&
+            ((s.lat === undefined && s.lng === undefined) ||
+              validCoordinate(s.lat, s.lng)),
         ) &&
         unique(t.stops) &&
         Array.isArray(t.expenses) &&
@@ -64,13 +68,21 @@ export function validateTrips(value: unknown): value is Trip[] {
 export function loadTrips(seed: Trip[]): { trips: Trip[]; error: string } {
   try {
     const current = localStorage.getItem(KEY),
+      previous = localStorage.getItem(PREVIOUS),
       legacy = localStorage.getItem(LEGACY);
-    const raw = current ?? legacy;
+    const raw = current ?? previous ?? legacy;
     if (raw === null) return { trips: seed, error: "" };
     const parsed = JSON.parse(raw);
     if (!validateTrips(parsed)) throw new Error("Invalid data");
-    if (current === null && legacy !== null)
-      localStorage.setItem("tripflow-v02-backup", legacy);
+    if (current === null)
+      try {
+        if (previous !== null)
+          localStorage.setItem("tripflow-v03-backup", previous);
+        else if (legacy !== null)
+          localStorage.setItem("tripflow-v02-backup", legacy);
+      } catch {
+        // The source key is never modified, so a failed backup copy is not fatal.
+      }
     return { trips: parsed, error: "" };
   } catch {
     return {

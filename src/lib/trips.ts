@@ -51,3 +51,10 @@ export function reschedule(
     return { ...s, day: next >= 1 && next <= count ? next : 0 };
   });
 }
+export const kindNames = {
+  flight: "Flight",
+  hotel: "Hotel",
+  place: "Place",
+  photo: "Photo spot",
+  food: "Food & drink",
+} as const;
