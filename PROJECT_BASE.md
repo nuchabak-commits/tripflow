@@ -5,7 +5,7 @@
 **Project:** TripFlow  
 **Type:** Travel Planning Web Application  
 **Frontend:** React + TypeScript + Vite  
-**Current Version:** v0.3 Trip Experience  
+**Current Version:** v0.4 Map  
 **Status:** Active Development
 
 ---
@@ -1523,3 +1523,24 @@ Storage: **tripflow-v03**, migrated from **tripflow-v02** without overwriting it
 Trip.coverUrl is optional; Stop.day=0 is the Unscheduled holding area.
 No backend or live maps were introduced. Calendar remains an agenda view.
 Next milestone: **v0.4 — Map**, with coordinates and real map markers/routes.
+
+---
+
+# v0.4 Delivery Update — 25 September 2026
+
+This release implements **v0.4 — Map** (Leaflet + OpenStreetMap).
+
+Current source version: **0.4.0**.
+Storage: **tripflow-v04**, migrated from **tripflow-v03** (or tripflow-v02) without overwriting it; backup key tripflow-v03-backup.
+Stop.lat / Stop.lng are optional WGS84 coordinates, present together or not at all.
+
+Delivered:
+
+- Trip tab **Map**: numbered per-day pins, per-day colors, dashed straight-line daily route, distance totals.
+- Filters: Whole trip / Day N / Unscheduled; list and marker selection in sync; popup with Edit and Directions.
+- Activity form location: Nominatim search (explicit button), tap/drag pin, paste coordinates or map links.
+- Itinerary day map preview, Pinned badge, Open full map.
+- Offline tile notice; configurable tile provider via VITE_MAP_TILE_URL.
+
+Not yet: marker clustering, road routing / travel times, offline tiles, reusable Places library.
+Next milestone: **v0.5 — Budget+**.

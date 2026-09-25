@@ -33,9 +33,18 @@ npm run preview
 - หากโหลดแผ่นแผนที่ไม่ได้ (ออฟไลน์) จะแจ้งเตือน และยังแสดงหมุด/เส้นทางได้
 - เมนู Places แสดงจำนวนกิจกรรมที่ปักหมุดแล้ว และเปิดแท็บ Map
 
+### ฟอร์มที่ปรับปรุง
+
+- **Destination**: พิมพ์ชื่อเมืองภาษาไทยหรืออังกฤษแล้วเลือกจากรายการ (เมืองยอดนิยมมีในแอป เมืองอื่นค้นออนไลน์) เลือกแล้วช่อง **Country** จะเลือกให้อัตโนมัติ; Country ค้นหาได้ทั้งชื่อไทย/อังกฤษ
+- **วันที่**: กรอกและแสดงแบบ วัน/เดือน/ปี (พิมพ์ `20122026` จะจัดรูปเป็น `20/12/2026` ให้) มีปุ่มปฏิทิน และรับปี พ.ศ. เช่น `20/12/2569`
+- **เวลา**: แบบ 24 ชั่วโมง พิมพ์สั้น ๆ ได้ เช่น `930` → 09:30, `1pm` → 13:00 หรือเลือกจากรายการทุก 30 นาที
+- **ไอคอน**: เลือกจากชุดแนะนำ หรือใส่ emoji อะไรก็ได้ (Windows กด Win + .)
+- **ค้นหาสถานที่**: ค้นจาก OpenStreetMap สองบริการพร้อมกัน เรียงผลที่ใกล้เมืองของทริปก่อน และแสดงระยะทาง; ร้านเล็ก ๆ ที่ไม่มีใน OSM ให้กดลิงก์ **Search on Google Maps** แล้วคัดลอกพิกัด (คลิกขวา/กดค้างที่จุด แล้วแตะตัวเลขพิกัด) มาวาง
+- ลิงก์แชร์แบบสั้น `maps.app.goo.gl` อ่านพิกัดจากเบราว์เซอร์ไม่ได้ ให้เปิดลิงก์แล้วคัดลอกตัวเลขพิกัดแทน
+
 ### แผนที่และบริการภายนอก
 
-- แผ่นแผนที่โหลดจาก `tile.openstreetmap.org` และค้นหาสถานที่ผ่าน `nominatim.openstreetmap.org` เฉพาะตอนเปิด Map หรือกดปุ่ม Search (ไม่ค้นหาอัตโนมัติขณะพิมพ์) ต้องต่ออินเทอร์เน็ต
+- แผ่นแผนที่โหลดจาก `tile.openstreetmap.org`; ค้นหาสถานที่ผ่าน `photon.komoot.io` (คำแนะนำขณะพิมพ์ เมื่อพิมพ์ในช่องค้นหา) และ `nominatim.openstreetmap.org` (เมื่อกด Search เท่านั้น) ต้องต่ออินเทอร์เน็ต
 - บริการของ OSM เหมาะกับการใช้งานเบา ๆ/เดโม หาก deploy ให้ผู้ใช้จำนวนมาก ให้ตั้งผู้ให้บริการ tile เองใน `.env`:
 
 ```bash
@@ -64,7 +73,7 @@ VITE_MAP_ATTRIBUTION=&copy; Example, &copy; OpenStreetMap contributors
 1. รัน v0.4 ด้วย **browser/profile, protocol, hostname และ port เดิม** (เช่น `http://localhost:5173`)
 2. ครั้งแรกที่ยังไม่มี `tripflow-v04` ระบบอ่าน `tripflow-v03` (หรือ `tripflow-v02` หากไม่มี v0.3) และสำรองเป็น `tripflow-v03-backup`
 3. การแก้ไขใหม่บันทึกลง `tripflow-v04` เท่านั้น ไม่เขียนทับ key เดิม จึงย้อนกลับไปใช้ v0.3 ได้ (แต่จะไม่เห็นการแก้ไขที่ทำใน v0.4)
-4. ทริปเดิมยังไม่มีพิกัด ให้เปิด Map แล้วกด **Add location** ทีละกิจกรรม; ทริปตัวอย่าง Chengdu ที่มีพิกัดจะแสดงเฉพาะ workspace ใหม่
+4. ทริปเดิมยังไม่มีพิกัด ให้เปิด Map แล้วกด **Add location** ทีละกิจกรรม
 
 ## อัปเกรดจาก v0.2 โดยรักษาข้อมูล (v0.3)
 
@@ -74,7 +83,7 @@ VITE_MAP_ATTRIBUTION=&copy; Example, &copy; OpenStreetMap contributors
 4. การแก้ไขใหม่บันทึกลง `tripflow-v03` เท่านั้น ไม่เขียนทับข้อมูล v0.2
 5. ใช้ Settings → Export current trips เพื่อสำรองเป็น JSON ก่อนเปลี่ยนเครื่อง/ล้าง browser
 
-หากไม่มีข้อมูลเดิม จะเริ่มด้วยทริปตัวอย่าง Chengdu, Luang Prabang, Nakhon Nayok และ Tokyo
+หากไม่มีข้อมูลเดิม แอปจะเริ่มจาก workspace ว่าง (ไม่มีทริปตัวอย่าง) ให้กด **Plan a new trip** เพื่อสร้างทริปแรก
 หากข้อมูลเดิมอ่านไม่ได้ ระบบจะแจ้งเตือนและไม่เขียนทับต้นฉบับ ไม่แทนข้อมูลเสียด้วยข้อมูลตัวอย่างโดยเงียบ ๆ
 หากพื้นที่จัดเก็บไม่พอ การเปลี่ยนแปลงอาจอยู่เฉพาะในหน่วยความจำ ให้ export ก่อนปิดหน้า
 
@@ -97,6 +106,7 @@ src/
     TripMap.tsx            Leaflet map wrapper (pins, routes, picker)
     TripMapView.tsx        Map tab: day filter, pinned list
     LocationField.tsx      Search / tap-to-pin / coordinates in activity form
+    Fields.tsx             Combobox, day/month/year date, 24-hour time, emoji fields
     TripForm.tsx           Create/edit and date remapping
     UI.tsx                 Dialog, focus handling, confirmations, toasts
   pages/
@@ -105,8 +115,9 @@ src/
   lib/
     trips.ts               Calendar-day arithmetic and formatting
     geo.ts                 Coordinate parsing, validation, distances
+    search.ts              Photon + Nominatim search, merging, trip center
     storage.ts             Validation and v0.3/v0.2 migration
-  data/demo.ts             Demo trips
+  data/places.ts           Countries (Intl names) and popular cities (EN/TH)
   types/index.ts           Backward-compatible domain types
   styles.css               Existing theme + v0.3/v0.4 styles
 ```

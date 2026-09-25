@@ -47,7 +47,9 @@ import {
   coverStyle,
   status,
   kindNames,
+  longDate,
 } from "../lib/trips";
+import { TimeField } from "../components/Fields";
 import TripMap from "../components/TripMap";
 import TripMapView, { mapData } from "../components/TripMapView";
 import type { MapFilter } from "../components/TripMapView";
@@ -536,6 +538,13 @@ function StopForm({
     },
   );
   const [error, setError] = useState("");
+  const [timeOk, setTimeOk] = useState(true);
+  const shortDate = (d: number) =>
+    dateLabel(dateAt(trip.startDate, d - 1)).replace(/ \d{4}$/, "");
+  const dayTitle =
+    f.day === 0
+      ? "UNSCHEDULED"
+      : `DAY ${f.day} · ${longDate(dateAt(trip.startDate, f.day - 1)).toUpperCase()}`;
   const [coords, setCoords] = useState(
     stop && located(stop) ? formatCoordinates(stop) : "",
   );
@@ -548,13 +557,17 @@ function StopForm({
   return (
     <Modal title={stop ? "Edit activity" : "Add activity"} close={close}>
       <form
+        className="stop-form"
+        noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          if (!f.title.trim()) return setError("Enter an activity name.");
+          if (!f.title.trim()) return setError("Enter a place or activity name.");
+          if (!timeOk)
+            return setError("Enter the time in 24-hour format, e.g. 09:30 or 19:00.");
           const point = parseCoordinates(coords);
           if (coords.trim() && !point)
             return setError(
-              "Enter coordinates as latitude, longitude (e.g. 30.6545, 104.0832) or paste a map link.",
+              "Enter coordinates as latitude, longitude (e.g. 18.79661, 98.96772) or paste a Google Maps / OpenStreetMap link.",
             );
           const { lat: _lat, lng: _lng, ...rest } = f;
           save({
@@ -562,10 +575,45 @@ function StopForm({
             ...(point ?? {}),
             title: f.title.trim(),
             note: f.note.trim(),
+            duration: f.duration.trim(),
           });
         }}
       >
-        <h2>{stop ? "Edit" : "Add"} activity</h2>
+        <div>
+          <span className="eyebrow">{dayTitle}</span>
+          <h2>{stop ? "Edit" : "Add"} activity</h2>
+        </div>
+        <fieldset className="kind-field">
+          <legend>Category</legend>
+          <div className="kind-options" role="radiogroup" aria-label="Category">
+            {(Object.keys(names) as StopKind[]).map((k) => {
+              const Icon = icons[k];
+              return (
+                <button
+                  type="button"
+                  key={k}
+                  role="radio"
+                  aria-checked={f.kind === k}
+                  className={"kind-option " + k + (f.kind === k ? " on" : "")}
+                  onClick={() => setF({ ...f, kind: k })}
+                >
+                  <Icon size={17} />
+                  <span>{names[k]}</span>
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+        <label>
+          Place / activity
+          <input
+            required
+            maxLength={150}
+            value={f.title}
+            onChange={(e) => setF({ ...f, title: e.target.value })}
+            placeholder="e.g. Wat Phra That Doi Suthep, Hotpot dinner"
+          />
+        </label>
         <div className="form-row">
           <label>
             Day
@@ -577,68 +625,54 @@ function StopForm({
               <option value={0}>Unscheduled</option>
               {Array.from({ length: days }, (_, i) => (
                 <option key={i} value={i + 1}>
-                  Day {i + 1}
+                  Day {i + 1} · {shortDate(i + 1)}
                 </option>
               ))}
             </select>
           </label>
-          <label>
-            Time
-            <input
-              required
-              type="time"
-              value={f.time}
-              onChange={(e) => setF({ ...f, time: e.target.value })}
-            />
-          </label>
+          <TimeField
+            value={f.time}
+            onChange={(time) => setF({ ...f, time })}
+            onValidity={setTimeOk}
+          />
         </div>
-        <label>
-          Category
-          <select
-            value={f.kind}
-            onChange={(e) => setF({ ...f, kind: e.target.value as StopKind })}
-          >
-            {Object.entries(names).map(([k, n]) => (
-              <option key={k} value={k}>
-                {n}
-              </option>
+        <div className="duration-field">
+          <label htmlFor="stop-duration">Duration</label>
+          <div className="chip-row" role="group" aria-label="Quick durations">
+            {DURATIONS.map((d) => (
+              <button
+                type="button"
+                key={d}
+                className={f.duration === d ? "on" : ""}
+                aria-pressed={f.duration === d}
+                onClick={() => setF({ ...f, duration: d })}
+              >
+                {d}
+              </button>
             ))}
-          </select>
-        </label>
-        <label>
-          Place / activity
+          </div>
           <input
-            required
-            maxLength={150}
-            value={f.title}
-            onChange={(e) => setF({ ...f, title: e.target.value })}
-            placeholder="Taikoo Li"
-          />
-        </label>
-        <label>
-          Notes
-          <textarea
-            rows={3}
-            value={f.note}
-            onChange={(e) => setF({ ...f, note: e.target.value })}
-            placeholder="Address, transport or reminders"
-          />
-        </label>
-        <label>
-          Duration
-          <input
+            id="stop-duration"
             maxLength={50}
             value={f.duration}
             onChange={(e) => setF({ ...f, duration: e.target.value })}
-            placeholder="2h 30m"
+            placeholder="or type, e.g. 2h 30m"
+          />
+        </div>
+        <label>
+          Notes
+          <textarea
+            rows={2}
+            value={f.note}
+            onChange={(e) => setF({ ...f, note: e.target.value })}
+            placeholder="Address, booking number, transport or reminders"
           />
         </label>
         <LocationField
           text={coords}
           setText={setCoords}
-          query={[f.title.trim(), trip.city, trip.country]
-            .filter(Boolean)
-            .join(", ")}
+          title={f.title}
+          trip={trip}
           context={context}
         />
         {error && (
@@ -651,6 +685,7 @@ function StopForm({
     </Modal>
   );
 }
+const DURATIONS = ["30m", "1h", "1h 30m", "2h", "3h", "Half day", "Full day"];
 function Budget({
   trip,
   update,

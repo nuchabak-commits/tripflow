@@ -27,6 +27,11 @@ export function validateTrips(value: unknown): value is Trip[] {
         text(t.gradient) &&
         typeof t.favorite === "boolean" &&
         text(t.notes) &&
+        (t.countryCode === undefined ||
+          (typeof t.countryCode === "string" &&
+            /^[A-Z]{2}$/.test(t.countryCode))) &&
+        ((t.lat === undefined && t.lng === undefined) ||
+          validCoordinate(t.lat, t.lng)) &&
         (!t.coverUrl ||
           (typeof t.coverUrl === "string" && /^https:\/\//.test(t.coverUrl))) &&
         Array.isArray(t.stops) &&
@@ -65,13 +70,14 @@ export function validateTrips(value: unknown): value is Trip[] {
     ) && unique(value)
   );
 }
-export function loadTrips(seed: Trip[]): { trips: Trip[]; error: string } {
+/** Loads saved trips; a browser with no saved data starts with an empty workspace. */
+export function loadTrips(): { trips: Trip[]; error: string } {
   try {
     const current = localStorage.getItem(KEY),
       previous = localStorage.getItem(PREVIOUS),
       legacy = localStorage.getItem(LEGACY);
     const raw = current ?? previous ?? legacy;
-    if (raw === null) return { trips: seed, error: "" };
+    if (raw === null) return { trips: [], error: "" };
     const parsed = JSON.parse(raw);
     if (!validateTrips(parsed)) throw new Error("Invalid data");
     if (current === null)

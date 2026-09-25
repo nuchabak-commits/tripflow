@@ -58,3 +58,39 @@ export const kindNames = {
   photo: "Photo spot",
   food: "Food & drink",
 } as const;
+/** "dd/mm/yyyy" (also -, ., space or 8 digits); Buddhist-era years (> 2400) are converted. */
+export function parseDateInput(text: string): string | null {
+  const t = text.trim();
+  const m =
+    t.match(/^(\d{1,2})[/.\-\s](\d{1,2})[/.\-\s](\d{4})$/) ||
+    t.match(/^(\d{2})(\d{2})(\d{4})$/);
+  if (!m) return null;
+  let year = +m[3];
+  if (year > 2400) year -= 543;
+  const iso = `${year}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+  return validDate(iso) ? iso : null;
+}
+export const formatDateInput = (iso: string) =>
+  validDate(iso) ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : "";
+export const longDate = (iso: string) =>
+  new Date(iso + "T12:00:00").toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+/** 24-hour "HH:MM" from "13:00", "1300", "13.00", "9", "930", "1pm", "1:30 pm"; "" stays "". */
+export function parseTime(text: string): string | null {
+  const t = text.trim().toLowerCase().replace(/\s+/g, "").replace("น.", "");
+  if (!t) return "";
+  const m = t.match(/^(\d{1,2})(?:[:.h]?(\d{2}))?(am|pm|a|p)?$/);
+  if (!m) return null;
+  let h = +m[1];
+  const min = m[2] ? +m[2] : 0;
+  if (m[3]) {
+    if (h < 1 || h > 12) return null;
+    h = (h % 12) + (m[3].startsWith("p") ? 12 : 0);
+  }
+  if (h > 23 || min > 59) return null;
+  return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+}

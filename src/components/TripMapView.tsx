@@ -11,6 +11,7 @@ import {
   located,
   routeKm,
 } from "../lib/geo";
+import { tripCenter } from "../lib/search";
 export type MapFilter = "all" | number;
 const shortDate = (trip: Trip, day: number) =>
   dateLabel(dateAt(trip.startDate, day - 1)).replace(/ \d{4}$/, "");
@@ -114,6 +115,7 @@ export default function TripMapView({
               if (s) edit(s);
             }}
             directions={directionsUrl}
+            home={tripCenter(trip)}
             fitKey={`${trip.id}:${filter}:${points.length}`}
             scrollZoom
           />

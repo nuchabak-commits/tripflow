@@ -71,6 +71,7 @@ export default function TripMap({
   onPick,
   pick = null,
   focus = null,
+  home = null,
   fitKey,
   label,
   className = "",
@@ -87,6 +88,8 @@ export default function TripMap({
   pick?: LatLng | null;
   /** When set, the next fit centers here instead of fitting every point. */
   focus?: LatLng | null;
+  /** Where to look when there is nothing to fit, e.g. the destination city. */
+  home?: LatLng | null;
   fitKey: string;
   label: string;
   className?: string;
@@ -208,7 +211,10 @@ export default function TripMap({
           animate: false,
         });
       const all = points.map((p) => L.latLng(p.lat, p.lng));
-      if (!all.length) return m.setView([20, 100], 2, { animate: false });
+      if (!all.length)
+        return home
+          ? m.setView([home.lat, home.lng], 12, { animate: false })
+          : m.setView([20, 100], 2, { animate: false });
       if (all.length === 1) return m.setView(all[0], 14, { animate: false });
       m.fitBounds(L.latLngBounds(all), { padding: [36, 36], maxZoom: 15, animate: false });
     };

@@ -9,8 +9,20 @@
 - Itinerary: "Pinned" badge, a day map preview and an "Open full map" shortcut that keeps the selected day.
 - Places section shows pinned counts and opens the Map tab.
 - Offline notice when map tiles cannot load; pins and routes still render.
-- Chengdu demo: coordinates and a Day 2 plan.
 - Optional VITE_MAP_TILE_URL / VITE_MAP_ATTRIBUTION to use another tile provider.
+
+### Improved forms (feedback round)
+- Place search queries Photon and Nominatim together, biased to the trip's destination, with live suggestions, distance from the destination center and merged duplicates.
+- "Can't find it?" Google Maps link for places missing from OpenStreetMap, with guidance to copy coordinates; short share links (maps.app.goo.gl) are detected and explained.
+- Destination is a searchable list (English or Thai, about 200 popular cities plus online search) and picking a city fills the country automatically; Country is a searchable list of all countries (English/Thai names).
+- Dates are entered and shown as day/month/year with a calendar button; Buddhist-era years (e.g. 2569) are accepted.
+- Time is 24-hour with shortcuts ("930", "1pm", "19.00 น.") and half-hour suggestions; no AM/PM picker.
+- Any emoji (or 1–2 characters) as the trip icon, with a suggestion grid; 8 cover colors as swatches.
+- Live trip-card preview, budget with thousands separators, category buttons with icons and quick duration chips.
+- Trip may store countryCode and a destination center (lat/lng), used to center maps and place search.
+
+### Changed
+- A browser with no saved data starts with an empty workspace; sample trips are no longer created. Sample data moved to tests/fixtures/demo-trips.ts for tests only. Existing saved trips are not affected.
 
 ### Fixed
 - A failed migration backup copy no longer blocks loading saved data.

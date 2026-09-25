@@ -20,6 +20,10 @@ export type Expense = {
 export type PackingItem = { id: string; name: string; packed: boolean };
 export type Trip = {
   coverUrl?: string;
+  /** v0.4: ISO 3166-1 alpha-2 code and destination center, when picked from the list. */
+  countryCode?: string;
+  lat?: number;
+  lng?: number;
   id: string;
   city: string;
   country: string;

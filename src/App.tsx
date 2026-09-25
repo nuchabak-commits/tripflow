@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import TripPage from "./pages/TripPage";
-import { seedTrips } from "./data/demo";
 import type { Trip } from "./types";
 import { FeedbackProvider, useFeedback } from "./components/UI";
 import { KEY, loadTrips } from "./lib/storage";
@@ -14,7 +13,7 @@ export default function App() {
   );
 }
 function Workspace() {
-  const [loaded] = useState(() => loadTrips(seedTrips));
+  const [loaded] = useState(() => loadTrips());
   const [trips, setTrips] = useState(loaded.trips);
   const [selected, setSelected] = useState<string | null>(null);
   const [section, setSection] = useState("Home");
